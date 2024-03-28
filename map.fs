@@ -53,6 +53,10 @@ unit -map-
 \ So internally we call them word lists `wid` but externally
 \ we call them maps `map`.
 
+1 cells VALUE map.space
+\ The size in bytes of the storage space for each value
+\ default is 1 cell
+
 \ Check if there is an item in the given word list `wid`
 \ with key `c-addr` `u`.
 \ If the item exists return its body address and `true`.
@@ -66,7 +70,7 @@ unit -map-
    s" CREATE " >r pad r@ move \ CREATE 
    pad r@ + swap dup >r move  \ caddr u 
    pad r> r> + evaluate 
-   0 , ;
+   map.space ALLOT ;
 
 \ Create a new item with name `c-addr` `u` in the word list `wid`.
 \ Return its body address.
@@ -74,7 +78,7 @@ unit -map-
    get-current >r set-current
    ['] "variable catch 
    r> set-current throw 
-   here cell- ; 
+   here map.space - ; 
 
 external
 
@@ -117,7 +121,7 @@ cr .(        Map: <name> )
 cr .(          x s" key" <name> ! )
 cr .(            s" key" <name> @ )
 
-1 [IF] \ do test
+0 [IF] \ do test
 
 marker *test*
 
