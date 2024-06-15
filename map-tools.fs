@@ -4,6 +4,14 @@
 \ some extensions for UHO's map.fs
 \ note that simple-iterate-map requires local variables - written here for VFX Forth
 
+alias: >addr >value
+\ to avoid confusion, as Forth value-flavoured types do not need @
+
+: >string
+\ typical usage
+	>addr count
+;
+
 internal
 
 : iterator-for-counting ( n c-addr u -- n+1 -1)

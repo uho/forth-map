@@ -112,6 +112,8 @@ external
 
 end-unit
 
+0 [IF] \ write usage
+
 cr .( Key/Value maps loaded )
 cr .( Usage: map Constant <map> )
 cr .(          x s" key" <map> >value ! )
@@ -120,6 +122,8 @@ cr .(    or: )
 cr .(        Map: <name> )
 cr .(          x s" key" <name> ! )
 cr .(            s" key" <name> @ )
+
+[THEN]
 
 0 [IF] \ do test
 
