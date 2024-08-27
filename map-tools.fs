@@ -7,11 +7,6 @@
 alias: >addr >value
 \ to avoid confusion, as Forth value-flavoured types do not need @
 
-: >string
-\ typical usage
-	>addr count
-;
-
 internal
 
 : iterator-for-counting ( n c-addr u -- n+1 -1)
@@ -71,4 +66,41 @@ external
 \ Stage 3 - tidy up
 	buffer free throw
 ;
-		
+
+\ Additional notation words
+
+: map-strings
+\ Set storage to 256 bytes for each key-value pair
+	256 -> map.space
+;
+
+: |<=| ( c-addr u map c-addr u --)
+\ take a string and place it as the value of a key
+	2>R
+	>addr
+	2R>
+	rot place
+;
+
+: <=" ( c-addr u map " value"  -- )
+\ read a string from the input buffer and place it as the value of a key
+\ usage: " key" map  <=" value-string"
+	'"' parse ( c-addr u map a-addr --)
+	|<=|
+;
+
+: >string ( " key" map -- c-addr u)
+\ return the value-string of key
+	>addr count
+;
+
+: >number ( " key" map -- x)
+\ return the value-string of a key converted to a cell-sized number
+	>string isInteger? (  d 2 | n 1 | 0)
+	case
+		0 of 0 endof		\ non-numbers just go to zero
+	 	1 of endof			
+	 	2 of drop endof	\ drop the high word of a double, it was probably just a serial number
+	end-case
+;
+	
