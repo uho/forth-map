@@ -74,27 +74,20 @@ external
 	256 -> map.space
 ;
 
-: |<=| ( c-addr u map c-addr u --)
-\ take a string and place it as the value of a key
-	2>R
-	>addr
-	2R>
-	rot place
+: =>" ( c-addr u map <key>  -- )
+\ place a computed value to a key read from the input buffer
+\ usage: value	map	=>" key"
+	'"' parse	( c-addr u map c-addr u)
+	rot >addr	( c-addr u addr)
+	place
 ;
 
-: <=" ( c-addr u map " value"  -- )
-\ read a string from the input buffer and place it as the value of a key
-\ usage: " key" map  <=" value-string"
-	'"' parse ( c-addr u map a-addr --)
-	|<=|
-;
-
-: >string ( " key" map -- c-addr u)
+: >string ( c-addr u map -- c-addr u)
 \ return the value-string of key
 	>addr count
 ;
 
-: >number ( " key" map -- x)
+: >number ( c-addr u map -- x)
 \ return the value-string of a key converted to a cell-sized number
 	>string isInteger? (  d 2 | n 1 | 0)
 	case

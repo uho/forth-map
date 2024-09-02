@@ -8,15 +8,10 @@ CR
 	map-strings
 	
 	map CONSTANT colourTable
-	s" red" colourTable s" 0xff0000" |<=|
-	s" green" colourTable <=" 0x00ff00"
-	s" blue" colourTable <=" 0x0000ff"
-	
-\	s" blue" =>" 0x0000ff" colourTable 
-\  ( caddr u) thisImageMap =>" FOCUSER"    \ " FOCUSER" is standardized keyword
-\  ( compute-value caddr u) R@ ( get-myMap) =>" FOCUSER"    \ " FOCUSER" is standardized keyword
-\  ( "           " caddr u) R@ (     myMap) =>" FILTER" 
-
+\ 	value			 map		    =>" key"
+	s" 0xff0000" colourTable =>" red" 
+	s" 0x00ff00" colourTable =>" green" 
+	s" 0x0000ff" colourTable =>" blue"
 													
 T{ s" red" colourTable >string hashS   }T s" 0xff0000" hashS ==
 T{ s" green" colourTable >string hashS }T s" 0x00ff00" hashS ==
