@@ -96,4 +96,20 @@ external
 	 	2 of drop endof	\ drop the high word of a double, it was probably just a serial number
 	end-case
 ;
-	
+
+\ convenience	
+
+: .map-iterator ( c-addr u map --)
+\ forth-map iterator
+\ write out a forth-map to a buffer in xml empty-tag format
+\ <Property key="key" value="value"/>
+	>R 2dup CR type		\ key
+	9 emit 9 emit			\ tab
+	R> >string	type		\ value
+;
+
+: .map ( map --)
+\ examine the contents of a string map in the forward direction
+	['] .map-iterator swap ( xt map) simple-iterate-map
+	CR
+;

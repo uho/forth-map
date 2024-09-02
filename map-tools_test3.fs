@@ -18,3 +18,6 @@ T{ s" green" colourTable >string hashS }T s" 0x00ff00" hashS ==
 T{ s" blue" colourTable >number }T 255 ==
 
 CR Tend
+
+CR
+colourtable .map
