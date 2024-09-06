@@ -80,7 +80,7 @@ external
 	'"' parse	( c-addr u map c-addr u)
 	rot >addr	( c-addr u addr)
 	place
-;
+; IMMEDIATE
 
 : >string ( c-addr u map -- c-addr u)
 \ return the value-string of key
