@@ -74,13 +74,34 @@ external
 	256 -> map.space
 ;
 
+\ interpret version
+: (=>")i ( c-addr u map <key>  -- )
+\ place a computed value to a key read from the input buffer
+\ usage: value	map	=>" key"
+
+;
+
+\ compilation version
+: (=>")c ( c-addr u map <key>  -- )
+\ place a computed value to a key read from the input buffer
+\ usage: value	map	=>" key"
+
+;
+
 : =>" ( c-addr u map <key>  -- )
 \ place a computed value to a key read from the input buffer
 \ usage: value	map	=>" key"
+	STATE if (=>")c 
+	'"' parse postpone SLITERAL \ SLITERAL is immediate
+	postpone rot postpone >addr
+	postpone place	
+	else (=>")i 
 	'"' parse	( c-addr u map c-addr u)
 	rot >addr	( c-addr u addr)
-	place
-; IMMEDIATE
+	place	
+
+	then
+; immediate
 
 : >string ( c-addr u map -- c-addr u)
 \ return the value-string of key
