@@ -74,32 +74,17 @@ external
 	256 -> map.space
 ;
 
-\ interpret version
-: (=>")i ( c-addr u map <key>  -- )
-\ place a computed value to a key read from the input buffer
-\ usage: value	map	=>" key"
-
-;
-
-\ compilation version
-: (=>")c ( c-addr u map <key>  -- )
-\ place a computed value to a key read from the input buffer
-\ usage: value	map	=>" key"
-
-;
-
 : =>" ( c-addr u map <key>  -- )
 \ place a computed value to a key read from the input buffer
 \ usage: value	map	=>" key"
-	STATE if (=>")c 
-	'"' parse postpone SLITERAL \ SLITERAL is immediate
-	postpone rot postpone >addr
-	postpone place	
-	else (=>")i 
-	'"' parse	( c-addr u map c-addr u)
-	rot >addr	( c-addr u addr)
-	place	
-
+	STATE @ if 	\ compilation version
+		'"' parse postpone SLITERAL 	\ postpone because SLITERAL is immediate
+		postpone rot postpone >addr	\ postpone to compile these words
+		postpone place	
+	else 
+		'"' parse	( c-addr u map c-addr u)
+		rot >addr	( c-addr u addr)
+		place	
 	then
 ; immediate
 
@@ -125,7 +110,7 @@ external
 \ write out a forth-map to a buffer in xml empty-tag format
 \ <Property key="key" value="value"/>
 	>R 2dup CR type		\ key
-	9 emit 9 emit			\ tab
+	tab 						\ tab
 	R> >string	type		\ value
 ;
 

@@ -4,6 +4,8 @@ include "%idir%\map-tools.fs"
 include "%idir%\..\simple-tester\simple-tester.f"
 
 CR Tstart
+
+ 	map-strings
 CR
 .( basic map operations) CR
 	hex
