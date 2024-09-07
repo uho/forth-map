@@ -93,7 +93,7 @@ external
 	>addr count
 ;
 
-: >number ( c-addr u map -- x)
+: >num ( c-addr u map -- x)
 \ return the value-string of a key converted to a cell-sized number
 	>string isInteger? (  d 2 | n 1 | 0)
 	case
@@ -110,7 +110,7 @@ external
 \ write out a forth-map to a buffer in xml empty-tag format
 \ <Property key="key" value="value"/>
 	>R 2dup CR type		\ key
-	tab 						\ tab
+	tab tab					\ tab
 	R> >string	type		\ value
 ;
 

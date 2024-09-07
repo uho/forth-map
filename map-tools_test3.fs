@@ -24,7 +24,7 @@ T{ s" red" colourTable >string hashS   }T s" 0xff0000" hashS ==
 T{ s" green" colourTable >string hashS }T s" 0x00ff00" hashS ==	
 
 	s" 0x0000ff" colourTable =>" blue"
-T{ s" blue" colourTable >number }T 255 ==
+T{ s" blue" colourTable >num }T 255 ==
 
 CR colourtable .map
 
