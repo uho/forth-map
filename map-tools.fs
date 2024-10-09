@@ -110,7 +110,7 @@ external
 \ write out a forth-map to a buffer in xml empty-tag format
 \ <Property key="key" value="value"/>
 	>R 2dup CR type		\ key
-	tab tab					\ tab
+	9 emit 9 emit			\ tabs
 	R> >string	type		\ value
 ;
 
