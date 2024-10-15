@@ -1,8 +1,9 @@
 \ test for map-tools.fs
-include "%idir%\..\ForthBase\ForthBase.f"
+include "%idir%\..\ForthBase\libraries\libraries.f"
 include "%idir%\map.fs"
 include "%idir%\map-tools.fs"
-include "%idir%\..\simple-tester\simple-tester.f"
+NEED forthbase
+NEED simple-tester
 
 CR Tstart CR
 

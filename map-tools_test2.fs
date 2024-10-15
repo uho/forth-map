@@ -1,8 +1,9 @@
 \ test for map-tools.fs
 \ illustrate the use of structures with a 
+include "%idir%\..\ForthBase\libraries\libraries.f"
 include "%idir%\map.fs"
 include "%idir%\map-tools.fs"
-include "%idir%\..\simple-tester\simple-tester.f"
+NEED simple-tester
 
 BEGIN-STRUCTURE DATA_STRUCTURE
 	 1 +FIELD DATA_ATTRIBUTE
