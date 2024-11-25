@@ -119,3 +119,6 @@ external
 	['] .map-iterator swap ( xt map) simple-iterate-map
 	CR
 ;
+
+\ storage of 256 byte values by default
+map-strings
