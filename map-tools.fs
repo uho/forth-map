@@ -4,24 +4,15 @@
 \ some extensions for UHO's map.fs
 \ note that simple-iterate-map requires local variables - written here for VFX Forth
 
-alias: >addr >value
-\ to avoid confusion, as Forth value-flavoured types do not need @
-
-internal
-
 : iterator-for-counting ( n c-addr u -- n+1 -1)
 \ an interator to count the number of items in a map
 	2drop 1+ -1
 ;
 
-external
-
 : count-keys ( map -- n)
 \ count the number of keys in the map
 	0 ['] iterator-for-counting rot iterate-map
 ;
-
-internal
 
 : iterator-for-buffering ( buffer c-addr u -- buffer -1)
 \ the buffer grows downwards so the argument should be 1 cell ahead of the present end-of-buffer
@@ -30,8 +21,6 @@ internal
 	cell - dup R> swap !
 	-1
 ;
-
-external
 
 : buffer-keys ( hook map -- buffer)
 \ copy the keys into a buffer and return the start address
@@ -67,13 +56,6 @@ external
 	buffer free throw
 ;
 
-\ Additional notation words
-
-: map-strings
-\ Set storage to 256 bytes for each key-value pair
-	256 -> map.space
-;
-
 : =>" ( c-addr u map <key>  -- )
 \ place a computed value to a key read from the input buffer
 \ usage: value	map	=>" key"
@@ -93,22 +75,8 @@ external
 	>addr count
 ;
 
-: >num ( c-addr u map -- x)
-\ return the value-string of a key converted to a cell-sized number
-	>string isInteger? (  d 2 | n 1 | 0)
-	case
-		0 of 0 endof		\ non-numbers just go to zero
-	 	1 of endof			
-	 	2 of drop endof	\ drop the high word of a double, it was probably just a serial number
-	end-case
-;
-
-\ convenience	
-
 : .map-iterator ( c-addr u map --)
 \ forth-map iterator
-\ write out a forth-map to a buffer in xml empty-tag format
-\ <Property key="key" value="value"/>
 	>R 2dup CR type		\ key
 	9 emit 9 emit			\ tabs
 	R> >string	type		\ value
@@ -120,5 +88,3 @@ external
 	CR
 ;
 
-\ storage of 256 byte values by default
-map-strings

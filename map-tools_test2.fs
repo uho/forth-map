@@ -34,14 +34,14 @@ END-STRUCTURE
 	
 	map CONSTANT DB1
 	
-	-1 s" Float64" s" 195.4997911" s" OBSERVATION:CENTER:RA" DB1 >value DATA_STRUCTURE!
-	-1 s" Float64" s" 47.2661464" s" OBSERVATION:CENTER:DEC" DB1 >value DATA_STRUCTURE!
-	-1 s" Timepoint" s" '2024-3-31:00:00:05'" s" Observation.time" DB1 >value DATA_STRUCTURE!
-	 0 s" String" s" Observatorio de Aras de los Olmos (OAO)" s" OBSERVATION:LOCATION:NAME" DB1 >value DATA_STRUCTURE!
+	-1 s" Float64" s" 195.4997911" s" OBSERVATION:CENTER:RA" DB1 >addr DATA_STRUCTURE!
+	-1 s" Float64" s" 47.2661464" s" OBSERVATION:CENTER:DEC" DB1 >addr DATA_STRUCTURE!
+	-1 s" Timepoint" s" '2024-3-31:00:00:05'" s" Observation.time" DB1 >addr DATA_STRUCTURE!
+	 0 s" String" s" Observatorio de Aras de los Olmos (OAO)" s" OBSERVATION:LOCATION:NAME" DB1 >addr DATA_STRUCTURE!
 	
 : iterator
 	>R 2dup CR type CR R>
-	>value DATA_STRUCTURE dump
+	>addr DATA_STRUCTURE dump
 ;
 
 ' iterator DB1 simple-iterate-map
