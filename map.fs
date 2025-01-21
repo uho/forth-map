@@ -52,6 +52,7 @@ synonym map wordlist
   ;
 
 : invoke-xt ( i*x xt nt -- j*x xt flag )
+	\ should use catch here
    swap >r  name>string r@ execute  r> swap ;
 
 : iterate-map ( i*x xt map -- j*x )

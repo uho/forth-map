@@ -37,5 +37,7 @@ T{ red hashS }T s" ff0000" hashS ==
 T{ blue hashS }T s" 0000ff" hashS ==
 colourTable2 -map
 
+\ Quotations for a single use 
+
 CR
 Tend

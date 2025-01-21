@@ -70,6 +70,7 @@
 	then
 ; immediate
 
+\ move to map.fs - is this name too general for a specific use specific, use wordlists?
 : >string ( c-addr u map -- c-addr u)
 \ return the value-string of key
 	>addr count
