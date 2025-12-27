@@ -52,11 +52,15 @@ synonym map wordlist
   ;
 
 : invoke-xt ( i*x xt nt -- j*x xt flag )
-	\ should use catch here
+\ this word defines the xt for traverse-wordlist in interate-map
+\ xt is a user-defined xt that will be applied to each item in the map
+\ invoke-xt obtains the name of each key and then calls the user-defined xt
+\ the user-defined xt has stack effect (i*x c-addr u -- j*x)
    swap >r  name>string r@ execute  r> swap ;
 
 : iterate-map ( i*x xt map -- j*x )
-\ map iterator
+\ interate the map with a user-defined xt
+\ xt is passed the name of the key and has stack effect (i*x c-addr u -- j*x)
    ['] invoke-xt swap traverse-wordlist drop ;
 
 
