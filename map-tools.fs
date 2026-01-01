@@ -33,9 +33,10 @@
 : simple-iterate-map { xt map | count buffer hook -- }
 \ iterate the full map in the forward direction
 \ xt has stack effect ( x*i c-addr u map -- x*j), noting that
-\		1. the stack parameters are the same as for >value and x*i, x*j are freely accessible
-\		2. parameter 'map' should be consumed (it is replaced each time by the iteration loop)
-\		3. there is no T|F flag - all keys are processed
+\ 		1. c-addr u is the key as a string
+\ 		2. the stack parameters are the same as for >value and x*i, x*j are freely accessible
+\ 		3. parameter 'map' should be consumed (it is replaced each time by the iteration loop)
+\ 		4. there is no T|F flag - all keys are processed
 
 \ Stage 0 - allocate a buffer to hold the keys
 	map count-keys	-> count
