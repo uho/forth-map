@@ -57,17 +57,20 @@
 	buffer free throw
 ;
 
+: => ( caddrV uV caddrK uK map --)
+\ place a value in a key, both given by counted strings
+    >addr place
+;
+
 : =>" ( c-addr u map <key>  -- )
 \ place a computed value to a key read from the input buffer
 \ usage: value	map	=>" key"
 	STATE @ if 	\ compilation version
 		'"' parse postpone SLITERAL 	\ postpone because SLITERAL is immediate
-		postpone rot postpone >addr	\ postpone to compile these words
-		postpone place	
+		postpone rot postpone =>    	\ postpone to compile these words
 	else 
 		'"' parse	( c-addr u map c-addr u)
-		rot >addr	( c-addr u addr)
-		place	
+		rot =>
 	then
 ; immediate
 
