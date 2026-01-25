@@ -80,6 +80,15 @@
 	>addr count
 ;
 
+: >integer ( c-addr u map -- c-addr u)
+\ access the value-string of the key and convert it to a single integer
+    >string isInteger? case
+        1 of        endof
+        2 of nip    endof
+        0 swap
+    endcase
+;
+
 : .map-iterator ( c-addr u map --)
 \ forth-map iterator
 	>R 2dup CR type		\ key
