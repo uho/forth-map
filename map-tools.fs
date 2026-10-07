@@ -77,7 +77,8 @@
 \ move to map.fs - is this name too general for a specific use specific, use wordlists?
 : >string ( c-addr u map -- c-addr u)
 \ return the value-string of key
-	>addr count
+	item? 0= abort" map item not found"
+	count
 ;
 
 : >integer ( c-addr u map -- c-addr u)
@@ -101,4 +102,3 @@
 	['] .map-iterator swap ( xt map) simple-iterate-map
 	CR
 ;
-
