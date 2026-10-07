@@ -5,7 +5,7 @@ ordered-map constant transient
 
 Tstart
 
-s" first-value" s" FIRST" transient => 
+s" first-value" s" FIRST" transient =>
 s" second-value" s" SECOND" transient =>
 s" replacement" s" FIRST" transient =>
 
