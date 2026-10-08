@@ -9,9 +9,15 @@ s" first-value" s" FIRST" transient =>
 s" second-value" s" SECOND" transient =>
 s" replacement" s" FIRST" transient =>
 
+: ordered-test-value ( c-addr u map -- hash )
+    >string hashS
+;
+
 T{ transient count-keys }T 2 ==
 T{ s" FIRST" transient >string hashS }T s" replacement" hashS ==
 T{ s" SECOND" transient >string hashS }T s" second-value" hashS ==
+T{ ' ordered-test-value transient simple-iterate-map }T
+    s" replacement" hashS s" second-value" hashS ==
 
 T{ 0 transient ordered-map-entry count hashS }T s" FIRST" hashS ==
 T{ 1 transient ordered-map-entry count hashS }T s" SECOND" hashS ==

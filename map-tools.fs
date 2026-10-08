@@ -30,8 +30,16 @@
 	['] iterator-for-buffering swap iterate-map
 ;
 
-: simple-iterate-map { xt map | count buffer hook -- }
-\ iterate the full map in the forward direction
+: ordered-map-simple-iterate { xt map -- }
+\ Ordered maps already retain insertion order, so no reversal buffer is needed.
+    map ORDERED_MAP_COUNT @ 0 ?do
+        i map ordered-map-entry count
+        map xt execute
+    loop
+;
+
+: wordlist-simple-iterate { xt map | count buffer hook -- }
+\ Reverse traverse-wordlist's newest-first order through a temporary key list.
 \ xt has stack effect ( x*i c-addr u map -- x*j), noting that
 \ 		1. c-addr u is the key as a string
 \ 		2. the stack parameters are the same as for >value and x*i, x*j are freely accessible
@@ -55,6 +63,15 @@
 	
 \ Stage 3 - tidy up
 	buffer free throw
+;
+
+: simple-iterate-map ( i*x xt map -- j*x )
+\ Present both map representations in forward creation/insertion order.
+    dup ordered-map? if
+        ordered-map-simple-iterate
+    else
+        wordlist-simple-iterate
+    then
 ;
 
 : => ( caddrV uV caddrK uK map --)
