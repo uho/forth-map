@@ -1,3 +1,6 @@
+\ Dual-representation string map: dictionary wordlists for enduring data and
+\ bounded heap-backed ordered maps for reusable instances.
+
 synonym map wordlist
 \ A map may use either a dictionary wordlist or bounded heap storage. Wordlist
 \ maps suit enduring configuration; ordered maps suit multiple reusable
