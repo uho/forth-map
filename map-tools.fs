@@ -76,7 +76,8 @@
 
 \ move to map.fs - is this name too general for a specific use specific, use wordlists?
 : >string ( c-addr u map -- c-addr u)
-\ return the value-string of key
+\ Return an existing counted value as a string. Unlike >addr and =>, this is a
+\ strict read: a miss aborts rather than silently changing the map.
 	item? 0= abort" map item not found"
 	count
 ;

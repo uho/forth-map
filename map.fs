@@ -1,10 +1,17 @@
 synonym map wordlist
-\ Maps aka key/value structures are implemente with wordlists. 
-\ So internally we call them word lists `wid` but externally we call them maps `map`.
+\ A map may use either a dictionary wordlist or bounded heap storage. Wordlist
+\ maps suit enduring configuration; ordered maps suit multiple reusable
+\ instances. The public access and iteration words dispatch on the handle.
 
+\ These values are sampled when an ordered map is allocated. Changing them
+\ affects subsequent allocations, not maps which already exist.
 64 value map.key-space
 128 value map.capacity
 
+\ Ordered-map header, in cells:
+\   link | used entries | capacity | bytes per entry | key bytes
+\ Each following entry is:
+\   counted key (key bytes + count byte) | counted value (map.space bytes)
 5 cells constant ORDERED_MAP_HEADER
 
 : ORDERED_MAP_NEXT       ( map -- addr ) ;
@@ -15,12 +22,17 @@ synonym map wordlist
 : ORDERED_MAP_ITEMS      ( map -- addr ) ORDERED_MAP_HEADER + ;
 
 256 VALUE map.space
-\ map.space includes the count byte, so the maximum string value is 255 bytes.
+\ map.space includes the count byte, so its default permits 255 value bytes.
 
+\ VFX wordlist identifiers cannot safely be dereferenced to read a type tag.
+\ Keep allocated handles in this private linked list so the shared API can
+\ distinguish ordered maps from wordlist maps.
 variable ordered-maps
 0 ordered-maps !
 
 : ordered-map? ( map -- flag )
+\ Handle recognition is intentionally linear in the number of live ordered
+\ maps; normal sessions own only a small number of frame-local instances.
     ordered-maps @
     begin
         dup
@@ -32,7 +44,8 @@ variable ordered-maps
 ;
 
 : ordered-map { | item-size map -- map }
-\ Allocate a bounded insertion-ordered map outside dictionary space.
+\ Allocate one header and its fixed entry array outside dictionary space.
+\ No later insertion allocates memory or advances the Forth dictionary.
     map.key-space 1+ map.space + -> item-size
     item-size map.capacity * ORDERED_MAP_HEADER +
         allocate throw -> map
@@ -47,15 +60,19 @@ variable ordered-maps
 ;
 
 : ordered-map-entry { index map -- entry }
+\ Convert a zero-based insertion index to its fixed-size entry address.
     map ORDERED_MAP_ITEMS
     index map ORDERED_MAP_ITEM_SIZE @ * +
 ;
 
 : ordered-map-value { entry map -- value-addr }
+\ Skip the entry's counted-key field to reach its counted-value field.
     entry map ORDERED_MAP_KEY_SPACE @ 1+ +
 ;
 
 : ordered-map-item? { c-addr u map | entry -- addr true | 0 false }
+\ Search existing entries without creating one. Keys compare case-insensitively
+\ to match wordlist-map lookup. The returned address is the counted value.
     u map ORDERED_MAP_KEY_SPACE @ > if 0 false exit then
     map ORDERED_MAP_COUNT @ 0 ?do
         i map ordered-map-entry -> entry
@@ -67,6 +84,8 @@ variable ordered-maps
 ;
 
 : ordered-map-new-item { c-addr u map | entry value-addr -- addr }
+\ Append a new key at the next insertion slot. >addr performs lookup first, so
+\ replacing an existing value does not append or change its order.
     u map ORDERED_MAP_KEY_SPACE @ >
         abort" ordered map key is too long"
     map ORDERED_MAP_COUNT @ map ORDERED_MAP_CAPACITY @ >=
@@ -80,6 +99,8 @@ variable ordered-maps
 ;
 
 : reset-map ( map -- )
+\ Reuse an ordered map without allocation or dictionary growth. Reset erases
+\ all keys and values, so addresses returned before reset become invalid data.
     dup ordered-map? 0= abort" only ordered maps can be reset"
     dup >r
     r@ ORDERED_MAP_ITEMS
@@ -89,6 +110,7 @@ variable ordered-maps
 ;
 
 : unlink-ordered-map { map | link current -- }
+\ Remove a handle from the recognition list before releasing its allocation.
     ordered-maps -> link
     begin
         link @ dup
@@ -104,6 +126,8 @@ variable ordered-maps
 ;
 
 : free-map ( map -- )
+\ Ordered maps own heap storage and must be freed once. Wordlist maps are
+\ dictionary objects and deliberately make this operation a no-op.
     dup ordered-map? if
         dup unlink-ordered-map
         free throw
@@ -149,15 +173,17 @@ variable ordered-maps
 
 
 : item? ( c-addr u map -- addr true | 0 false )
+\ Non-creating lookup shared by both representations.
     dup ordered-map? if ordered-map-item? else wordlist-item? then
 ;
 
 : new-item ( c-addr u map -- addr )
+\ Representation-specific insertion; callers normally use >addr or =>.
     dup ordered-map? if ordered-map-new-item else wordlist-new-item then
 ;
 
 : >addr ( c-addr u map -- addr )
-\ Return the body address of an item with key `c-addr` `u` in the key/value map `map`	
+\ Return the counted-value address, creating the key only when absent.
     >r 2dup r@ item? IF 
     	nip nip r> drop
     ELSE
@@ -178,8 +204,9 @@ variable ordered-maps
    ['] invoke-xt swap traverse-wordlist drop ;
 
 : ordered-map-iterate { xt map -- }
-\ Match traverse-wordlist semantics: visit newest-to-oldest and consume the
-\ flag returned by xt. simple-iterate-map reverses this to insertion order.
+\ traverse-wordlist visits dictionary keys newest-first. Visit ordered entries
+\ in the same direction so buffer-keys and simple-iterate-map continue to
+\ reverse that traversal and expose stable insertion order to callers.
     map ORDERED_MAP_COUNT @ 0 ?do
         map ORDERED_MAP_COUNT @ 1- i - map ordered-map-entry count
         xt execute 0= if unloop exit then
