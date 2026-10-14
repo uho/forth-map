@@ -74,9 +74,11 @@
     then
 ;
 
-: => ( caddrV uV caddrK uK map --)
-\ place a value in a key, both given by counted strings
-    >addr place
+: => { value-addr value-u key-addr key-u map -- }
+\ Place a counted value without writing beyond either map representation.
+    value-u map map-value-capacity >=
+        abort" map value is too long"
+    key-addr key-u map >addr value-addr value-u rot place
 ;
 
 : =>" ( c-addr u map <key>  -- )

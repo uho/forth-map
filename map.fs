@@ -185,6 +185,16 @@ variable ordered-maps
     dup ordered-map? if ordered-map-new-item else wordlist-new-item then
 ;
 
+: map-value-capacity ( map -- u )
+\ Return the byte capacity of a counted value, including its count byte.
+    dup ordered-map? if
+        dup ORDERED_MAP_ITEM_SIZE @
+        swap ORDERED_MAP_KEY_SPACE @ 1+ -
+    else
+        drop map.space
+    then
+;
+
 : >addr ( c-addr u map -- addr )
 \ Return the counted-value address, creating the key only when absent.
     >r 2dup r@ item? IF 

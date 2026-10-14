@@ -2,8 +2,29 @@ NEED forth-map
 NEED simple-tester
 
 ordered-map constant transient
+ordered-map constant value-test
+map constant dictionary-test
+create test-value-bytes 257 allot
+
+: test-fill-values ( -- )
+    257 0 do i test-value-bytes i + c! loop
+;
+: ordered-test-overlong ( -- )
+    test-value-bytes 256 s" TOO-LONG" value-test =>
+;
+: dictionary-test-overlong ( -- )
+    test-value-bytes 256 s" TOO-LONG" dictionary-test =>
+;
+test-fill-values
 
 Tstart
+
+T{ test-value-bytes 255 s" MAX" value-test => }T ==
+T{ s" MAX" value-test >string nip }T 255 ==
+T{ ' ordered-test-overlong catch 0<> }T -1 ==
+T{ test-value-bytes 255 s" MAX" dictionary-test => }T ==
+T{ s" MAX" dictionary-test >string nip }T 255 ==
+T{ ' dictionary-test-overlong catch 0<> }T -1 ==
 
 s" first-value" s" FIRST" transient =>
 s" second-value" s" SECOND" transient =>
@@ -32,4 +53,5 @@ T{ s" FRESH" transient >string hashS }T s" after-reset" hashS ==
 Tend
 
 transient free-map
+value-test free-map
 bye

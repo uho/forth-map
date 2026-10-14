@@ -80,7 +80,8 @@ The following values configure subsequent `ordered-map` allocations:
 
 Set them before calling `ordered-map`. Each map records its own limits, so
 later changes do not alter existing maps. The default maximum value length is
-255 bytes. Inserting an overlong key or exceeding capacity aborts explicitly.
+255 bytes. Inserting an overlong key, an overlong value, or exceeding capacity
+aborts explicitly.
 
 An ordered map uses approximately:
 
