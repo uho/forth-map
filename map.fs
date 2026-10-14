@@ -105,7 +105,7 @@ variable ordered-maps
 \ Reuse an ordered map without allocation or dictionary growth. Reset erases
 \ all keys and values, so addresses returned before reset become invalid data.
     dup ordered-map? 0= abort" only ordered maps can be reset"
-    dup >r
+    >r
     r@ ORDERED_MAP_ITEMS
     r@ ORDERED_MAP_ITEM_SIZE @
     r@ ORDERED_MAP_CAPACITY @ * erase

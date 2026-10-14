@@ -102,8 +102,8 @@ reset-map    ( map -- )   \ clear an ordered map for reuse
 free-map     ( map -- )   \ free an ordered map; no-op for a dictionary map
 ```
 
-`reset-map` accepts only ordered maps. Addresses returned for old values must
-not be retained across `reset-map` or `free-map`.
+`reset-map` accepts only ordered maps and consumes its map argument. Addresses
+returned for old values must not be retained across `reset-map` or `free-map`.
 
 ### Lookup and assignment
 

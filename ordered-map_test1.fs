@@ -22,7 +22,7 @@ T{ ' ordered-test-value transient simple-iterate-map }T
 T{ 0 transient ordered-map-entry count hashS }T s" FIRST" hashS ==
 T{ 1 transient ordered-map-entry count hashS }T s" SECOND" hashS ==
 
-transient reset-map
+T{ 1234 transient reset-map }T 1234 ==
 T{ transient count-keys }T 0 ==
 
 s" after-reset" s" FRESH" transient =>
