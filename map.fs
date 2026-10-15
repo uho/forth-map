@@ -12,7 +12,7 @@ synonym map wordlist
 128 value map.capacity
 
 \ Ordered-map header, in cells:
-\   link | used entries | capacity | bytes per entry | key bytes
+\   link (reserved) | used entries | capacity | bytes per entry | key bytes
 \ Each following entry is:
 \   counted key (key bytes + count byte) | counted value (map.space bytes)
 5 cells constant ORDERED_MAP_HEADER
@@ -28,69 +28,94 @@ synonym map wordlist
 \ map.space includes the count byte, so its default permits 255 value bytes.
 
 \ VFX wordlist identifiers cannot safely be dereferenced to read a type tag.
-\ Keep allocated handles in this private linked list so the shared API can
-\ distinguish ordered maps from wordlist maps.
+\ Keep allocation geometry in private records so corrupted map headers are
+\ never followed to identify, address, reset, or free a live ordered map.
+BEGIN-STRUCTURE ORDERED_MAP_RECORD
+                4 +FIELD ORDERED_MAP_RECORD_NEXT
+                4 +FIELD ORDERED_MAP_RECORD_MAP
+                4 +FIELD ORDERED_MAP_RECORD_CAPACITY
+                4 +FIELD ORDERED_MAP_RECORD_ITEM_SIZE
+                4 +FIELD ORDERED_MAP_RECORD_KEY_SPACE
+END-STRUCTURE
+
 variable ordered-maps
 0 ordered-maps !
 
-: ordered-map? ( map -- flag )
-\ Handle recognition is intentionally linear in the number of live ordered
-\ maps; normal sessions own only a small number of frame-local instances.
+: ordered-map-record { map | record -- record | 0 }
+\ Return the private record for a live ordered map without dereferencing map.
     ordered-maps @
     begin
         dup
     while
-        2dup = if 2drop true exit then
-        ORDERED_MAP_NEXT @
+        -> record
+        record ORDERED_MAP_RECORD_MAP @ map = if record exit then
+        record ORDERED_MAP_RECORD_NEXT @
     repeat
-    2drop false
+    drop 0
 ;
 
-: ordered-map-valid? { map | count capacity item-size key-space -- flag }
-\ Check the bounded header before an iterator trusts its entry count.
-    map ordered-map? 0= if false exit then
+: ordered-map? ( map -- flag )
+\ Handle recognition is intentionally linear in the number of live ordered
+\ maps; normal sessions own only a small number of frame-local instances.
+    ordered-map-record 0<>
+;
+
+: ordered-map-valid? { map | record count -- flag }
+\ Check mutable geometry against the allocation record before it is trusted.
+    map ordered-map-record -> record
+    record 0= if false exit then
     map ORDERED_MAP_COUNT @ -> count
-    map ORDERED_MAP_CAPACITY @ -> capacity
-    map ORDERED_MAP_ITEM_SIZE @ -> item-size
-    map ORDERED_MAP_KEY_SPACE @ -> key-space
-    capacity 0> if
-        item-size key-space 1+ >
-        count capacity <= and
-    else
-        false
-    then
+    count 0 < 0=
+    count record ORDERED_MAP_RECORD_CAPACITY @ <= and
+    map ORDERED_MAP_CAPACITY @ record ORDERED_MAP_RECORD_CAPACITY @ = and
+    map ORDERED_MAP_ITEM_SIZE @ record ORDERED_MAP_RECORD_ITEM_SIZE @ = and
+    map ORDERED_MAP_KEY_SPACE @ record ORDERED_MAP_RECORD_KEY_SPACE @ = and
 ;
 
-: ordered-map { | item-size map -- map }
+: ordered-map { | item-size map record -- map }
 \ Allocate one header and its fixed entry array outside dictionary space.
 \ No later insertion allocates memory or advances the Forth dictionary.
     map.key-space 1+ map.space + -> item-size
     item-size map.capacity * ORDERED_MAP_HEADER +
         allocate throw -> map
-    ordered-maps @ map ORDERED_MAP_NEXT !
+    ORDERED_MAP_RECORD allocate throw -> record
+    0 map ORDERED_MAP_NEXT !
     0 map ORDERED_MAP_COUNT !
     map.capacity map ORDERED_MAP_CAPACITY !
     item-size map ORDERED_MAP_ITEM_SIZE !
     map.key-space map ORDERED_MAP_KEY_SPACE !
     map ORDERED_MAP_ITEMS item-size map.capacity * erase
-    map ordered-maps !
+    ordered-maps @ record ORDERED_MAP_RECORD_NEXT !
+    map record ORDERED_MAP_RECORD_MAP !
+    map.capacity record ORDERED_MAP_RECORD_CAPACITY !
+    item-size record ORDERED_MAP_RECORD_ITEM_SIZE !
+    map.key-space record ORDERED_MAP_RECORD_KEY_SPACE !
+    record ordered-maps !
     map
 ;
 
-: ordered-map-entry { index map -- entry }
+\ map must be a valid live ordered map and index must name one allocation slot.
+: ordered-map-entry { index map | record -- entry }
 \ Convert a zero-based insertion index to its fixed-size entry address.
+    map ordered-map-record -> record
+    record 0= abort" invalid ordered map"
+    index 0< index record ORDERED_MAP_RECORD_CAPACITY @ >= or
+        abort" ordered map entry out of range"
     map ORDERED_MAP_ITEMS
-    index map ORDERED_MAP_ITEM_SIZE @ * +
+    index record ORDERED_MAP_RECORD_ITEM_SIZE @ * +
 ;
 
-: ordered-map-value { entry map -- value-addr }
+: ordered-map-value { entry map | record -- value-addr }
 \ Skip the entry's counted-key field to reach its counted-value field.
-    entry map ORDERED_MAP_KEY_SPACE @ 1+ +
+    map ordered-map-record -> record
+    record 0= abort" invalid ordered map"
+    entry record ORDERED_MAP_RECORD_KEY_SPACE @ 1+ +
 ;
 
 : ordered-map-item? { c-addr u map | entry -- addr true | 0 false }
 \ Search existing entries without creating one. Keys compare case-insensitively
 \ to match wordlist-map lookup. The returned address is the counted value.
+    map ordered-map-valid? 0= abort" invalid ordered map"
     u map ORDERED_MAP_KEY_SPACE @ > if 0 false exit then
     map ORDERED_MAP_COUNT @ 0 ?do
         i map ordered-map-entry -> entry
@@ -104,6 +129,7 @@ variable ordered-maps
 : ordered-map-new-item { c-addr u map | entry value-addr -- addr }
 \ Append a new key at the next insertion slot. >addr performs lookup first, so
 \ replacing an existing value does not append or change its order.
+    map ordered-map-valid? 0= abort" invalid ordered map"
     u map ORDERED_MAP_KEY_SPACE @ >
         abort" ordered map key is too long"
     map ORDERED_MAP_COUNT @ map ORDERED_MAP_CAPACITY @ >=
@@ -119,39 +145,40 @@ variable ordered-maps
 : reset-map ( map -- )
 \ Reuse an ordered map without allocation or dictionary growth. Reset erases
 \ all keys and values, so addresses returned before reset become invalid data.
-    dup ordered-map? 0= abort" only ordered maps can be reset"
+    dup ordered-map-valid? 0= abort" invalid ordered map"
     >r
     r@ ORDERED_MAP_ITEMS
-    r@ ORDERED_MAP_ITEM_SIZE @
-    r@ ORDERED_MAP_CAPACITY @ * erase
+    r@ ordered-map-record ORDERED_MAP_RECORD_ITEM_SIZE @
+    r@ ordered-map-record ORDERED_MAP_RECORD_CAPACITY @ * erase
     0 r> ORDERED_MAP_COUNT !
 ;
 
-: unlink-ordered-map { map | link current -- }
+\ record must be a registered ordered-map record.
+: unlink-ordered-map { record | link current -- }
 \ Remove a handle from the recognition list before releasing its allocation.
     ordered-maps -> link
     begin
         link @ dup
     while
         -> current
-        current map = if
-            current ORDERED_MAP_NEXT @ link !
+        current record = if
+            current ORDERED_MAP_RECORD_NEXT @ link !
             exit
         then
-        current ORDERED_MAP_NEXT -> link
+        current ORDERED_MAP_RECORD_NEXT -> link
     repeat
     drop
 ;
 
-: free-map ( map -- )
+: free-map { map | record -- }
 \ Ordered maps own heap storage and must be freed once. Wordlist maps are
 \ dictionary objects and deliberately make this operation a no-op.
-    dup ordered-map? if
-        dup unlink-ordered-map
-        free throw
-    else
-        drop
-    then
+    map ordered-map-record -> record
+    record 0= if exit then
+    map ordered-map-valid? 0= abort" invalid ordered map"
+    map free throw
+    record unlink-ordered-map
+    record free throw
 ;
 
 : +map ( map --)

@@ -107,9 +107,9 @@ ordered-map-valid? ( map -- flag ) \ validate a live ordered-map header
 `reset-map` accepts only ordered maps and consumes its map argument. Addresses
 returned for old values must not be retained across `reset-map` or `free-map`.
 `ordered-map-valid?` checks that a live ordered map has a positive entry
-capacity, an entry layout with room for a counted value, and a count within
-that capacity. Ordered-map iterators reject an invalid header before walking
-its entry storage.
+capacity, a count within that capacity, and header geometry that still matches
+the map's private allocation record. Ordered-map operations reject an invalid
+header before addressing entries, resetting storage, or releasing the map.
 
 ### Lookup and assignment
 

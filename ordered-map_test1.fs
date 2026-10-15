@@ -5,6 +5,9 @@ ordered-map constant transient
 ordered-map constant value-test
 ordered-map constant invalid-map
 map constant dictionary-test
+variable invalid-map-capacity
+variable invalid-map-item-size
+variable invalid-map-key-space
 create test-value-bytes 257 allot
 
 : test-fill-values ( -- )
@@ -39,11 +42,40 @@ s" replacement" s" FIRST" transient =>
     ['] ordered-test-value invalid-map simple-iterate-map drop
 ;
 
+: invalid-map-lookup ( -- )
+    s" FIRST" invalid-map item? 2drop
+;
+
+: invalid-map-reset ( -- )
+    invalid-map reset-map
+;
+
+: invalid-map-free ( -- )
+    invalid-map free-map
+;
+
 T{ transient count-keys }T 2 ==
 T{ transient ordered-map-valid? }T -1 ==
+invalid-map ORDERED_MAP_CAPACITY @ invalid-map-capacity !
+invalid-map ORDERED_MAP_ITEM_SIZE @ invalid-map-item-size !
+invalid-map ORDERED_MAP_KEY_SPACE @ invalid-map-key-space !
+1234 invalid-map ORDERED_MAP_NEXT !
+T{ invalid-map ordered-map? }T -1 ==
+T{ invalid-map ordered-map-valid? }T -1 ==
 invalid-map ORDERED_MAP_CAPACITY @ 1+ invalid-map ORDERED_MAP_COUNT !
 T{ invalid-map ordered-map-valid? }T 0 ==
 T{ ' invalid-map-iterate catch }T -2 ==
+invalid-map-capacity @ invalid-map ORDERED_MAP_COUNT !
+0 invalid-map ORDERED_MAP_ITEM_SIZE !
+T{ invalid-map ordered-map-valid? }T 0 ==
+T{ ' invalid-map-lookup catch }T -2 ==
+T{ ' invalid-map-reset catch }T -2 ==
+T{ ' invalid-map-free catch }T -2 ==
+invalid-map-item-size @ invalid-map ORDERED_MAP_ITEM_SIZE !
+0 invalid-map ORDERED_MAP_KEY_SPACE !
+T{ invalid-map ordered-map-valid? }T 0 ==
+T{ ' invalid-map-iterate catch }T -2 ==
+invalid-map-key-space @ invalid-map ORDERED_MAP_KEY_SPACE !
 T{ s" FIRST" transient >string hashS }T s" replacement" hashS ==
 T{ s" SECOND" transient >string hashS }T s" second-value" hashS ==
 T{ ' ordered-test-value transient simple-iterate-map }T
