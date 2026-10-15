@@ -3,6 +3,7 @@ NEED simple-tester
 
 ordered-map constant transient
 ordered-map constant value-test
+ordered-map constant invalid-map
 map constant dictionary-test
 create test-value-bytes 257 allot
 
@@ -34,7 +35,15 @@ s" replacement" s" FIRST" transient =>
     >string hashS
 ;
 
+: invalid-map-iterate ( -- )
+    ['] ordered-test-value invalid-map simple-iterate-map drop
+;
+
 T{ transient count-keys }T 2 ==
+T{ transient ordered-map-valid? }T -1 ==
+invalid-map ORDERED_MAP_CAPACITY @ 1+ invalid-map ORDERED_MAP_COUNT !
+T{ invalid-map ordered-map-valid? }T 0 ==
+T{ ' invalid-map-iterate catch }T -2 ==
 T{ s" FIRST" transient >string hashS }T s" replacement" hashS ==
 T{ s" SECOND" transient >string hashS }T s" second-value" hashS ==
 T{ ' ordered-test-value transient simple-iterate-map }T
@@ -54,4 +63,5 @@ Tend
 
 transient free-map
 value-test free-map
+invalid-map free-map
 bye

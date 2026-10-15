@@ -46,6 +46,21 @@ variable ordered-maps
     2drop false
 ;
 
+: ordered-map-valid? { map | count capacity item-size key-space -- flag }
+\ Check the bounded header before an iterator trusts its entry count.
+    map ordered-map? 0= if false exit then
+    map ORDERED_MAP_COUNT @ -> count
+    map ORDERED_MAP_CAPACITY @ -> capacity
+    map ORDERED_MAP_ITEM_SIZE @ -> item-size
+    map ORDERED_MAP_KEY_SPACE @ -> key-space
+    capacity 0> if
+        item-size key-space 1+ >
+        count capacity <= and
+    else
+        false
+    then
+;
+
 : ordered-map { | item-size map -- map }
 \ Allocate one header and its fixed entry array outside dictionary space.
 \ No later insertion allocates memory or advances the Forth dictionary.
@@ -220,6 +235,7 @@ variable ordered-maps
 \ traverse-wordlist visits dictionary keys newest-first. Visit ordered entries
 \ in the same direction so buffer-keys and simple-iterate-map continue to
 \ reverse that traversal and expose stable insertion order to callers.
+    map ordered-map-valid? 0= abort" invalid ordered map"
     map ORDERED_MAP_COUNT @ 0 ?do
         map ORDERED_MAP_COUNT @ 1- i - map ordered-map-entry count
         xt execute 0= if unloop exit then

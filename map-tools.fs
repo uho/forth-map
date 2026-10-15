@@ -32,6 +32,7 @@
 
 : ordered-map-simple-iterate { xt map -- }
 \ Ordered maps already retain insertion order, so no reversal buffer is needed.
+    map ordered-map-valid? 0= abort" invalid ordered map"
     map ORDERED_MAP_COUNT @ 0 ?do
         i map ordered-map-entry count
         map xt execute

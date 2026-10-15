@@ -101,10 +101,15 @@ map          ( -- map )   \ create a dictionary wordlist map
 ordered-map  ( -- map )   \ allocate a bounded ordered map
 reset-map    ( map -- )   \ clear an ordered map for reuse
 free-map     ( map -- )   \ free an ordered map; no-op for a dictionary map
+ordered-map-valid? ( map -- flag ) \ validate a live ordered-map header
 ```
 
 `reset-map` accepts only ordered maps and consumes its map argument. Addresses
 returned for old values must not be retained across `reset-map` or `free-map`.
+`ordered-map-valid?` checks that a live ordered map has a positive entry
+capacity, an entry layout with room for a counted value, and a count within
+that capacity. Ordered-map iterators reject an invalid header before walking
+its entry storage.
 
 ### Lookup and assignment
 
