@@ -27,6 +27,22 @@ synonym map wordlist
 256 VALUE map.space
 \ map.space includes the count byte, so its default permits 255 value bytes.
 
+: wordlist-map? ( map -- flag )
+\ Follow VFX's live wordlists, never dereference the supplied handle.
+    >r wid-link
+    begin
+        @ ?dup
+    while
+        dup r@ = if drop r> drop true exit then
+        >wid-link
+    repeat
+    r> drop false
+;
+
+: ?wordlist-map ( map -- map )
+    dup wordlist-map? 0= abort" invalid map"
+;
+
 \ VFX wordlist identifiers cannot safely be dereferenced to read a type tag.
 \ Keep allocation geometry in private records so corrupted map headers are
 \ never followed to identify, address, reset, or free a live ordered map.
@@ -116,7 +132,7 @@ variable ordered-maps
 \ Search existing entries without creating one. Keys compare case-insensitively
 \ to match wordlist-map lookup. The returned address is the counted value.
     map ordered-map-valid? 0= abort" invalid ordered map"
-    u map ORDERED_MAP_KEY_SPACE @ > if 0 false exit then
+    u map ORDERED_MAP_KEY_SPACE @ u> if 0 false exit then
     map ORDERED_MAP_COUNT @ 0 ?do
         i map ordered-map-entry -> entry
         c-addr u entry count icompare 0= if
@@ -130,7 +146,7 @@ variable ordered-maps
 \ Append a new key at the next insertion slot. >addr performs lookup first, so
 \ replacing an existing value does not append or change its order.
     map ordered-map-valid? 0= abort" invalid ordered map"
-    u map ORDERED_MAP_KEY_SPACE @ >
+    u map ORDERED_MAP_KEY_SPACE @ u>
         abort" ordered map key is too long"
     map ORDERED_MAP_COUNT @ map ORDERED_MAP_CAPACITY @ >=
         abort" ordered map is full"
@@ -174,7 +190,7 @@ variable ordered-maps
 \ Ordered maps own heap storage and must be freed once. Wordlist maps are
 \ dictionary objects and deliberately make this operation a no-op.
     map ordered-map-record -> record
-    record 0= if exit then
+    record 0= if map ?wordlist-map drop exit then
     map ordered-map-valid? 0= abort" invalid ordered map"
     map free throw
     record unlink-ordered-map
@@ -183,18 +199,19 @@ variable ordered-maps
 
 : +map ( map --)
 \ make the keys of a map visible in the search order
-	+ORDER
+	?wordlist-map +ORDER
 ;
 
 : -map ( map --)
 \ make the keys of a map visible in the search order
-	-ORDER
+	?wordlist-map -ORDER
 ;
 
 : wordlist-item? ( c-addr u wid -- addr true | 0 false )
 \ Check if there is an item in the given word list `wid` with key `c-addr` `u`.
 \ If the item exists return its body address and `true` or return 0 and `false`.	
-   search-wordlist IF 
+   over 0< abort" invalid map key length"
+   ?wordlist-map search-wordlist IF
    	>body true 
    ELSE
    	0 false
@@ -211,7 +228,8 @@ variable ordered-maps
 
 : wordlist-new-item ( c-addr u wordlist -- addr )
 \ Create a new item with name `c-addr` `u` in the word list `wid`. Return its PFA (body address)	
-   get-current >r set-current
+   over 0< abort" invalid map key length"
+   ?wordlist-map get-current >r set-current
    ['] "string catch 
    r> set-current throw 
    here map.space - ; 
@@ -230,10 +248,11 @@ variable ordered-maps
 : map-value-capacity ( map -- u )
 \ Return the byte capacity of a counted value, including its count byte.
     dup ordered-map? if
+        dup ordered-map-valid? 0= abort" invalid ordered map"
         dup ORDERED_MAP_ITEM_SIZE @
         swap ORDERED_MAP_KEY_SPACE @ 1+ -
     else
-        drop map.space
+        ?wordlist-map drop map.space
     then
 ;
 
@@ -256,7 +275,7 @@ variable ordered-maps
 : wordlist-iterate-map ( i*x xt map -- j*x )
 \ interate the map with a user-defined xt
 \ xt is passed the name of the key and has stack effect (i*x c-addr u -- j*x)
-   ['] invoke-xt swap traverse-wordlist drop ;
+   ?wordlist-map ['] invoke-xt swap traverse-wordlist drop ;
 
 : ordered-map-iterate { xt map -- }
 \ traverse-wordlist visits dictionary keys newest-first. Visit ordered entries

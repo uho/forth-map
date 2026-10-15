@@ -81,7 +81,7 @@ The following values configure subsequent `ordered-map` allocations:
 Set them before calling `ordered-map`. Each map records its own limits, so
 later changes do not alter existing maps. The default maximum value length is
 255 bytes. Inserting an overlong key, an overlong value, or exceeding capacity
-aborts explicitly.
+aborts explicitly. Negative lengths are not accepted for copying.
 
 An ordered map uses approximately:
 
@@ -110,6 +110,10 @@ returned for old values must not be retained across `reset-map` or `free-map`.
 capacity, a count within that capacity, and header geometry that still matches
 the map's private allocation record. Ordered-map operations reject an invalid
 header before addressing entries, resetting storage, or releasing the map.
+Shared access, iteration, and disposal also verify that a non-ordered handle
+belongs to VFX's live wordlist chain; arbitrary and freed ordered-map handles
+are not passed to wordlist operations. This does not validate arbitrary string
+addresses or protect against corruption of the interpreter's own wordlists.
 
 ### Lookup and assignment
 

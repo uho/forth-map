@@ -77,7 +77,7 @@
 
 : => { value-addr value-u key-addr key-u map -- }
 \ Place a counted value without writing beyond either map representation.
-    value-u map map-value-capacity >=
+    value-u map map-value-capacity u< 0=
         abort" map value is too long"
     key-addr key-u map >addr value-addr value-u rot place
 ;

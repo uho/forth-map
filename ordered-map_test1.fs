@@ -5,6 +5,9 @@ ordered-map constant transient
 ordered-map constant value-test
 ordered-map constant invalid-map
 map constant dictionary-test
+wordlist constant plain-wordlist-test
+ordered-map constant stale-map
+stale-map free-map
 variable invalid-map-capacity
 variable invalid-map-item-size
 variable invalid-map-key-space
@@ -19,6 +22,25 @@ create test-value-bytes 257 allot
 : dictionary-test-overlong ( -- )
     test-value-bytes 256 s" TOO-LONG" dictionary-test =>
 ;
+: ordered-test-negative ( -- )
+    test-value-bytes -1 s" NEGATIVE" value-test =>
+;
+: dictionary-test-negative ( -- )
+    test-value-bytes -1 s" NEGATIVE" dictionary-test =>
+;
+: ordered-test-negative-key ( -- )
+    s" value" test-value-bytes -1 value-test =>
+;
+: dictionary-test-negative-key ( -- )
+    s" value" test-value-bytes -1 dictionary-test =>
+;
+: stale-lookup ( -- ) s" key" stale-map item? 2drop ;
+: stale-insert ( -- ) s" key" stale-map new-item drop ;
+: stale-iterate ( -- ) ['] 2drop stale-map iterate-map ;
+: stale-simple-iterate ( -- ) ['] drop stale-map simple-iterate-map ;
+: stale-free ( -- ) stale-map free-map ;
+: bogus-lookup ( -- ) s" key" 1234 item? 2drop ;
+: null-insert ( -- ) s" value" s" key" 0 => ;
 test-fill-values
 
 Tstart
@@ -29,6 +51,21 @@ T{ ' ordered-test-overlong catch 0<> }T -1 ==
 T{ test-value-bytes 255 s" MAX" dictionary-test => }T ==
 T{ s" MAX" dictionary-test >string nip }T 255 ==
 T{ ' dictionary-test-overlong catch 0<> }T -1 ==
+T{ ' ordered-test-negative catch }T -2 ==
+T{ ' dictionary-test-negative catch }T -2 ==
+T{ ' ordered-test-negative-key catch }T -2 ==
+T{ ' dictionary-test-negative-key catch }T -2 ==
+T{ ' stale-lookup catch }T -2 ==
+T{ ' stale-insert catch }T -2 ==
+T{ ' stale-iterate catch }T -2 ==
+T{ ' stale-simple-iterate catch }T -2 ==
+T{ ' stale-free catch }T -2 ==
+T{ ' bogus-lookup catch }T -2 ==
+T{ ' null-insert catch }T -2 ==
+T{ s" normal" s" key" plain-wordlist-test => }T ==
+T{ s" key" plain-wordlist-test >string hashS }T s" normal" hashS ==
+T{ dictionary-test free-map }T ==
+T{ plain-wordlist-test count-keys }T 1 ==
 
 s" first-value" s" FIRST" transient =>
 s" second-value" s" SECOND" transient =>
